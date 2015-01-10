@@ -1,0 +1,7 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"derelict_extras-sndfile": "1.0.26",
+		"derelict-util": "1.9.0"
+	}
+}

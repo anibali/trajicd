@@ -1,0 +1,9 @@
+{
+	"name": "trajic",
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2014, aiden",
+	"authors": ["aiden"],
+	"dependencies": {
+    "derelict_extras-sndfile": ">=1.0.26"
+	}
+}
