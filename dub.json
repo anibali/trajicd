@@ -1,9 +1,10 @@
 {
 	"name": "trajic",
-	"description": "A minimal D application.",
+	"description": "Compression algorithm.",
 	"copyright": "Copyright © 2014, aiden",
 	"authors": ["aiden"],
 	"dependencies": {
-    "derelict_extras-sndfile": ">=1.0.26"
+    "derelict_extras-sndfile": ">=1.0.26",
+    "dstats": ">=1.0.1"
 	}
 }

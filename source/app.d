@@ -42,7 +42,7 @@ void testSoundCompression() {
   }
 
   auto outstream = new MemoryStream();
-  auto linearPredictor = new LinearPredictor!short;
+  auto predictor = new PolynomialPredictor!short(4, 8);
 
   foreach(channel; 0..sndInfo.channels) {
     int[17] residualLengthHistogram;
@@ -54,7 +54,7 @@ void testSoundCompression() {
     //residuals[1] = ...
 
     foreach(frame; 2..sndInfo.frames) {
-      auto prediction = linearPredictor.predictNext(sound[channel][0..frame]);
+      auto prediction = predictor.predictNext(sound[channel][0..frame]);
       auto actual = sound[channel][frame];
       
       residuals[frame] = prediction ^ actual;
