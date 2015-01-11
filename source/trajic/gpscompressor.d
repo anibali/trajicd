@@ -27,7 +27,7 @@ auto createGpsCompressor(GpsCompression compression)(Stream sink) {
 /**
  * Simply stores points using full-size binary data types
  */
-struct DummyCompressor {
+private struct DummyCompressor {
   BitStream sink;
 
   void compress(R)(R points) if(isInputRange!R && is(ElementType!R == GpsPoint))
@@ -47,7 +47,7 @@ struct DummyCompressor {
  * Stores points as deltas from the previous point, with deltas encoded as
  * a delta length, n, (6 bits) followed by the delta value (n bits)
  */
-struct DeltaCompressor {
+private struct DeltaCompressor {
   BitStream sink;
 
   void compress(R)(R points) if(isInputRange!R && is(ElementType!R == GpsPoint))

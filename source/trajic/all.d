@@ -9,3 +9,4 @@ public import trajic.stream;
 public import trajic.gpspoint;
 public import trajic.gpsreader;
 public import trajic.gpscompressor;
+public import trajic.gpspredictor;

@@ -60,3 +60,7 @@ unittest {
   assert(bsr64(-1) == 63);
   assert(bsr64(0xFFFFFFFFFFFFFFFF) == 63);
 }
+
+T lerp(T)(T a, T b, T beta) if(__traits(isFloating, T)) {
+  return a + beta * (b - a);
+}

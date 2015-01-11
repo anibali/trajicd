@@ -49,7 +49,7 @@ struct GpsPoint {
    * two points that define a line.
    */
   auto lerp(GpsPoint endPoint, long atTime) {
-    long dt = endPoint.time - time;
+    double dt = endPoint.time - time;
     double dLat = endPoint.latitude - latitude;
     double dLon = endPoint.longitude - longitude;
 
@@ -57,7 +57,7 @@ struct GpsPoint {
     if(dt == 0) {
       timeRatio = 1;
     } else {
-      timeRatio = cast(double)(atTime - time) / dt;
+      timeRatio = (atTime - time) / dt;
     }
 
     GpsPoint newPoint = {
