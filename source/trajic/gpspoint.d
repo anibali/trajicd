@@ -11,7 +11,7 @@ struct GpsPoint {
 
   union {
     struct {
-      ulong time;
+      long time;
       double latitude;
       double longitude;
     }
@@ -44,6 +44,39 @@ struct GpsPoint {
     return EarthRadius * c;
   }
 
+  /**
+   * Linear interpolation/extrapolation of a new point at time `atTime` given
+   * two points that define a line.
+   */
+  auto lerp(GpsPoint endPoint, long atTime) {
+    long dt = endPoint.time - time;
+    double dLat = endPoint.latitude - latitude;
+    double dLon = endPoint.longitude - longitude;
+
+    double timeRatio;
+    if(dt == 0) {
+      timeRatio = 1;
+    } else {
+      timeRatio = cast(double)(atTime - time) / dt;
+    }
+
+    GpsPoint newPoint = {
+      time:       atTime,
+      latitude:   latitude + dLat * timeRatio,
+      longitude:  longitude + dLon * timeRatio
+    };
+
+    return newPoint;
+  }
+
+  bool opEquals()(auto ref const GpsPoint other) const {
+    bool same = true;
+    same = same && time == other.time;
+    same = same && abs(latitude - other.latitude) < 0.000001;
+    same = same && abs(longitude - other.longitude) < 0.000001;
+    return same;
+  }
+
   string toString() {
     return "GpsPoint(t=%d, lat=%.4f, lon=%.4f)".format(time, latitude, longitude);
   }
@@ -56,4 +89,7 @@ unittest {
   GpsPoint point2 = {24, 54, 89};
 
   assert(point1.distance(point2) == 5);
+
+  assert(point1.lerp(point2, 25) == GpsPoint(25, 57, 93));
+  assert(GpsPoint(12, 12, 12).lerp(GpsPoint(7, 7, 7), 6) == GpsPoint(6, 6, 6));
 }

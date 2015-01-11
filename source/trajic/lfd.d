@@ -2,6 +2,7 @@ module trajic.lfd;
 
 import std.stdio;
 import std.math: abs, log2;
+import std.algorithm;
 
 /*
  * This class finds the optimal way to place dividers amongst an array of
@@ -27,8 +28,7 @@ class LengthFrequencyDivider(alias forceMax=false)
    */
   this(double[] frequencies, int maxDividers)
   in {
-    import std.algorithm;
-    assert(abs(sum(frequencies) - 1) < 0.001);
+    assert(abs(reduce!"a + b"(frequencies) - 1) < 0.001);
   } body {
     this.frequencies = frequencies;
     this.maxDividers = maxDividers;

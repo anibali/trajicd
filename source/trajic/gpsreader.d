@@ -52,7 +52,7 @@ private struct CsvInputRange {
   } body {
     if(!nextLine.empty) {
       munch(nextLine, ", \t");
-      currentFront.time = parse!ulong(nextLine);
+      currentFront.time = parse!long(nextLine);
       munch(nextLine, ", \t");
       currentFront.latitude = parse!double(nextLine);
       munch(nextLine, ", \t");
