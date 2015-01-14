@@ -5,7 +5,7 @@ import std.stream;
 import trajic.all;
 
 void main() {
-  testSoundCompression();
+  testTrajectoryCompression();
 }
 
 void testTrajectoryCompression() {
@@ -17,7 +17,7 @@ void testTrajectoryCompression() {
   auto outFile = new std.stream.File("test/tmp.dat", FileMode.OutNew);
   scope(exit) outFile.close();
 
-  auto compressor = createGpsCompressor!(GpsCompression.Delta)(outFile);
+  auto compressor = createGpsCompressor!(GpsCompression.Predictive)(outFile);
   compressor.compress(gpsReader);
 }
 

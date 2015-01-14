@@ -25,7 +25,10 @@ private struct ConstantPredictor {
     return pastPoints[$-1].time;
   }
 
-  GpsPoint predictCoordinates(GpsPoint[] pastPoints, long time) {
+  GpsPoint predictCoordinates(GpsPoint[] pastPoints, long time)
+  out(result) {
+    assert(result.time == predictTime(pastPoints));
+  } body {
     return pastPoints[$-1];
   }
 }
@@ -42,8 +45,12 @@ private struct LinearPredictor {
   GpsPoint predictCoordinates(GpsPoint[] pastPoints, long time)
   in {
     assert(pastPoints.length > 1);
+  } out(result) {
+    assert(result.time == predictTime(pastPoints));
   }
   body {
-    return pastPoints[$-2].lerp(pastPoints[$-1], time);
+    GpsPoint nextPoint = pastPoints[$-2].lerp(pastPoints[$-1], time);
+    nextPoint.time = predictTime(pastPoints);
+    return nextPoint;
   }
 }

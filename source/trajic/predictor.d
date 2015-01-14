@@ -1,7 +1,10 @@
 module trajic.predictor;
 
-import std.stdio;
 import std.math;
+import std.range;
+import std.conv;
+
+import std.stdio;
 
 /**
  * A common base class for all predictors.
@@ -73,22 +76,15 @@ class PolynomialPredictor(T) : Predictor!T
     assert(past.length >= 2);
   } body {
     import dstats.regress;
-    import std.range;
 
     auto recentPast = past[$-min(past.length, maxHistorySize)..$];
 
-    auto betas = polyFitBeta(recentPast, iota(0, recentPast.length), polynomialOrder);
+    auto coefficients = polyFitBeta(
+      recentPast,
+      iota(0, recentPast.length),
+      polynomialOrder).to!(real[]);
 
-    // Can probably parallelize this
-    const x = recentPast.length;
-    int xPower = 1;
-    double y = 0;
-    foreach(beta; betas) {
-      y += beta * xPower;
-      xPower *= x;
-    }
-
-    return cast(T)y;
+    return cast(T)poly(recentPast.length, coefficients);
   }
 }
 

@@ -10,6 +10,8 @@ import std.stream;
 import std.conv: to;
 import std.container: heapify;
 
+import std.stdio;
+
 // Minihuff - super compact huffman representation where symbols must
 // be in the non-negative range of a signed integer
 
@@ -95,6 +97,11 @@ out(buffer) {
     assert(IsSignedInteger!S);
 
     auto buffer = new S[codewords.length * 2 - 1];
+
+    if(buffer.length == 1) {
+      return [codewords[0].symbol];
+    }
+
     string prefix = "";
 
     S index = 1;
@@ -121,7 +128,8 @@ out(buffer) {
 
       string suffix = pair.code.chompPrefix(commonPrefix);
       index += suffix.length - 1;
-      buffer[index++] = pair.symbol;
+      buffer[index] = pair.symbol;
+      ++index;
 
       previousCode = pair.code;
     }
