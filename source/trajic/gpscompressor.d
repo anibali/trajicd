@@ -117,6 +117,7 @@ unittest {
 
 private struct PredictiveCompressor(GpsPrediction prediction) {
   BitStream sink;
+  // TODO: Make these settable
   long maxTemporalError = 0;
   double maxSpatialError = 0;
 

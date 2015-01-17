@@ -1,26 +1,73 @@
 import std.stdio;
 import std.range;
 import std.stream;
+import std.getopt;
+import std.path;
+import std.file;
+import core.time;
 
 import trajic.all;
 
-void main() {
-  testTrajectoryCompression();
+void main(string[] args) {
+  testTrajectoryCompression(args);
 }
 
-void testTrajectoryCompression() {
-  auto inFile = new std.stream.File("test/car.plt");
-  scope(exit) inFile.close();
+void testTrajectoryCompression(string[] args) {
+  string[] inFileNames;
 
-  auto gpsReader = createGpsReader!(GpsFormat.Plt)(inFile);
+  // TODO: Make use of these values
+  double[string] maxError = ["spatial": 0, "temporal": 0];
 
-  auto outFile = new std.stream.File("test/tmp.dat", FileMode.OutNew);
-  scope(exit) outFile.close();
+  // ./trajic --max-error spatial=1,temporal=1 test/car.plt
 
-  auto compressor = createGpsCompressor!(GpsCompression.Predictive)(outFile);
-  compressor.compress(gpsReader);
+  arraySep = ",";
+  getopt(
+    args,
+    "max-error", &maxError
+  );
+
+  inFileNames = args[1..$];
+
+  TickDuration compressionTime;
+  int rawSize = 0;
+  int compressedSize = 0;
+
+  foreach(inFileName; inFileNames) {
+    auto inFile = new std.stream.File(inFileName);
+    scope(exit) inFile.close();
+
+    auto gpsReader = createGpsReader!(GpsFormat.Plt)(inFile);
+
+    auto outFileName = setExtension(inFileName, "tjc");
+    auto outFile = new std.stream.File(outFileName, FileMode.OutNew);
+    scope(exit) outFile.close();
+
+    TickDuration startTime = TickDuration.currSystemTick();
+
+    auto compressor = createGpsCompressor!(GpsCompression.Predictive)(outFile);
+    compressor.compress(gpsReader);
+
+    compressionTime += TickDuration.currSystemTick() - startTime;
+
+    inFile.position = 0;
+    gpsReader = createGpsReader!(GpsFormat.Plt)(inFile);
+    foreach(_; gpsReader) {
+      rawSize += 24; // Raw storage is 24 bytes per point
+    }
+
+    compressedSize += getSize(outFileName);
+  }
+
+  writeln("--- Final stats ---");
+  writefln("number_of_trajectories=%d", inFileNames.length);
+  writefln("compression_time=%.3f ms", compressionTime.usecs / 1000.0);
+  writefln("mean_compression_time=%.3f ms", compressionTime.usecs / (1000.0 * inFileNames.length));
+  writefln("raw_size=%d bytes", rawSize);
+  writefln("compressed_size=%d bytes", compressedSize);
+  writefln("compression_ratio=%.4f", cast(double)compressedSize / rawSize);
 }
 
+// Just playing around
 void testSoundCompression() {
   import std.algorithm;
   import derelict.sndfile.sndfile;
