@@ -4,4 +4,6 @@ __dummy.html
 *.o
 *.obj
 /trajic
+/__test__library__
 /test/tmp.dat
+/test/001

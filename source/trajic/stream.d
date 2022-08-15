@@ -120,17 +120,17 @@ class BitStream : FilterStream {
   void writeBits(ulong val, size_t nBits) {
     part |= (val << pos) & 0xFF;
     val >>= 8 - pos;
-    
+
     if(nBits + pos >= 8) {
       super.write(part);
-      
+
       nBits -= 8 - pos;
 
       for(int i = 0; i < nBits / 8; ++i) {
         super.write(cast(ubyte)(val & 0xFF));
         val >>= 8;
       }
-      
+
       pos = nBits % 8;
       part = val & (0xFF >> 8 - pos);
     } else {

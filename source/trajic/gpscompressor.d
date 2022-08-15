@@ -70,7 +70,7 @@ private struct DeltaCompressor {
     foreach(point; points) {
       foreach(j; 0..3) {
         long delta = point.data[j] ^ prevPoint.data[j];
-        
+
         int deltaBits = 0;
         if(delta > 0) deltaBits = bsr64(delta);
 

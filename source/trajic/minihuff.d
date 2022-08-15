@@ -102,8 +102,6 @@ out(buffer) {
       return [codewords[0].symbol];
     }
 
-    string prefix = "";
-
     S index = 1;
     string previousCode = "X";
     foreach(pair; codewords) {
@@ -115,7 +113,7 @@ out(buffer) {
         else
           break;
       }
-      
+
       S branchIndex = 0;
       foreach(ch; commonPrefix) {
         if(ch == '0') {

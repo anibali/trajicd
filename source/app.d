@@ -9,7 +9,153 @@ import core.time;
 import trajic.all;
 
 void main(string[] args) {
-  testTrajectoryCompression(args);
+  testClusterMemberCompression(args);
+}
+
+void doDeltaMemberCompression(string[] inFileNames) {
+  import std.algorithm;
+
+  TickDuration compressionTime;
+  int rawSize = 0;
+  int compressedSize = 0;
+
+  foreach(inFileName; inFileNames) {
+    auto inFile = new std.stream.File(inFileName);
+    scope(exit) inFile.close();
+
+    long[] numbers;
+
+    while(!inFile.eof) {
+      string line = cast(immutable)inFile.readLine();
+      auto number = line.parse!long;
+      numbers ~= number;
+      rawSize += 8;
+    }
+
+    // Two initial points are stored raw
+    compressedSize += 16;
+
+    if(numbers.length > 2) {
+      auto predictor = new trajic.predictor.ConstantPredictor!long();
+
+      auto residuals = new ulong[numbers.length];
+
+      foreach(i; 2..numbers.length) {
+        auto prediction = predictor.predictNext(numbers[0..i]);
+        auto actual = numbers[i];
+
+        residuals[i] = prediction ^ actual;
+        auto residualLength = bsr64(residuals[i]) + 1;
+
+        compressedSize += 6 + residualLength;
+      }
+    }
+  }
+
+  writeln("--- Final stats ---");
+  writefln("number_of_trajectories=%d", inFileNames.length);
+  writefln("raw_size=%d bytes", rawSize);
+  writefln("compressed_size=%d bytes", compressedSize);
+  writefln("compression_ratio=%.4f", cast(double)compressedSize / rawSize);
+}
+
+void doTrajicMemberCompression(T)(T predictor, string[] inFileNames) {
+  import std.algorithm;
+
+  TickDuration compressionTime;
+  int rawSize = 0;
+  int compressedSize = 0;
+
+  foreach(inFileName; inFileNames) {
+    auto inFile = new std.stream.File(inFileName);
+    scope(exit) inFile.close();
+
+    long[] numbers;
+
+    while(!inFile.eof) {
+      string line = cast(immutable)inFile.readLine();
+      auto number = line.parse!long;
+      numbers ~= number;
+      rawSize += 8;
+    }
+
+    // Two initial points are stored raw
+    compressedSize += 16;
+
+    if(numbers.length > 2) {
+      int[65] residualLengthHistogram;
+
+      auto residuals = new ulong[numbers.length];
+
+      foreach(i; 2..numbers.length) {
+        auto prediction = predictor.predictNext(numbers[0..i]);
+        auto actual = numbers[i];
+
+        residuals[i] = prediction ^ actual;
+        auto residualLength = bsr64(residuals[i]) + 1;
+        ++residualLengthHistogram[residualLength];
+      }
+
+      double[65] residualLengthFrequencies;
+
+      foreach(residualLength, count; residualLengthHistogram) {
+        residualLengthFrequencies[residualLength] = cast(double)count / (residuals.length - 2);
+      }
+
+      auto lfd = new LengthFrequencyDivider!false(residualLengthFrequencies, residualLengthFrequencies.length);
+      lfd.calculate();
+      double[65] costs;
+      foreach(int i; 1..costs.length) {
+        costs[i] = lfd.getCost(i);
+      }
+      auto bestNumberOfDividers = cast(int)(costs.length - minPos(costs[1..$]).length);
+
+      auto dividers = lfd.getDividers(bestNumberOfDividers);
+      double[byte] frequencyMap;
+
+      int index = 0;
+      foreach(divider; dividers) {
+        double sum = 0;
+        while(index < residualLengthFrequencies.length && index <= divider) {
+          sum += residualLengthFrequencies[index++];
+        }
+        frequencyMap[cast(byte)divider] = sum;
+      }
+
+      auto codewordMap = createMinihuff(frequencyMap).assocArray();
+
+      foreach(residual; residuals) {
+        auto residualLength = bsr64(residual) + 1;
+
+        ulong bestDivider = -1;
+        foreach(divider; dividers) {
+          if(residualLength <= divider) {
+            bestDivider = divider;
+            break;
+          }
+        }
+        compressedSize += bestDivider + codewordMap[cast(byte)bestDivider].length;
+      }
+    }
+  }
+
+  writeln("--- Final stats ---");
+  writefln("number_of_trajectories=%d", inFileNames.length);
+  writefln("raw_size=%d bytes", rawSize);
+  writefln("compressed_size=%d bytes", compressedSize);
+  writefln("compression_ratio=%.4f", cast(double)compressedSize / rawSize);
+}
+
+void testClusterMemberCompression(string[] args) {
+  // dub run -- trajic /home/aiden/Data/Trajectories/IllinoisClustered/Processed/0.1/members/*
+
+  string algorithm = args[1];
+  string[] inFileNames = args[2..$];
+
+  if(algorithm == "delta")
+    doDeltaMemberCompression(inFileNames);
+  else if(algorithm == "trajic")
+    doTrajicMemberCompression(new trajic.predictor.LinearPredictor!long, inFileNames);
 }
 
 void testTrajectoryCompression(string[] args) {
@@ -88,7 +234,6 @@ void testSoundCompression() {
     }
   }
 
-  auto outstream = new MemoryStream();
   auto predictor = new PolynomialPredictor!short(4, 8);
 
   foreach(channel; 0..sndInfo.channels) {
@@ -103,7 +248,7 @@ void testSoundCompression() {
     foreach(frame; 2..sndInfo.frames) {
       auto prediction = predictor.predictNext(sound[channel][0..frame]);
       auto actual = sound[channel][frame];
-      
+
       residuals[frame] = prediction ^ actual;
       auto residualLength = bsr64(residuals[frame]) + 1;
       ++residualLengthHistogram[residualLength];

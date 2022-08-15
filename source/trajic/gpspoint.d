@@ -40,7 +40,7 @@ struct GpsPoint {
     double a = sin(dlat / 2) * sin(dlat / 2) +
                sin(dlon / 2) * sin(dlon / 2) * cos(lat1) * cos(lat2);
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    
+
     return EarthRadius * c;
   }
 

@@ -12,7 +12,7 @@ import std.algorithm;
  * forceMax:    set to true if a divider must correspond to maximum
  *              possible length
  */
-class LengthFrequencyDivider(alias forceMax=false) 
+class LengthFrequencyDivider(alias forceMax=false)
   if(is(typeof(forceMax) == bool))
 {
   private double[] frequencies;
@@ -36,7 +36,7 @@ class LengthFrequencyDivider(alias forceMax=false)
     costs = new double[][frequencies.length];
     foreach(i; 0..costs.length)
       costs[i] = new double[maxDividers];
-    
+
     path = new ulong[][frequencies.length];
     foreach(i; 0..path.length)
       path[i] = new ulong[maxDividers];
@@ -48,14 +48,14 @@ class LengthFrequencyDivider(alias forceMax=false)
       foreach(y; 0..i)
         costs[i][0] += (i - y) * frequencies[y];
     }
-    
+
     foreach(j; 1..maxDividers)
       costs[0][j] = 0;
-    
+
     foreach(i; 1..frequencies.length) {
       foreach(j; 1..maxDividers) {
         costs[i][j] = double.infinity;
-        
+
         foreach(x; (j - 1)..i) {
           double c = costs[x][j - 1];
 
